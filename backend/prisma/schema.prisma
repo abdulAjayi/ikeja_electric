@@ -1,0 +1,52 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ENGINEER
+  EXECUTIVE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(ENGINEER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Meter {
+  id        String             @id
+  location  String
+  createdAt DateTime           @default(now())
+  readings  TelemetryReading[]
+}
+
+model TelemetryReading {
+  id               String   @id @default(uuid())
+  meterId          String
+  meter            Meter    @relation(fields: [meterId], references: [id], onDelete: Cascade)
+  timestamp        DateTime
+  phaseA_N_voltage Float
+  phaseB_N_voltage Float
+  phaseC_N_voltage Float
+  phaseA_current   Float
+  phaseB_current   Float
+  phaseC_current   Float
+  energyToday      Float
+  frequency        Float
+  powerFactor      Float
+  reactivePower    Float
+  harmonics        Float
+  status           String
+  createdAt        DateTime @default(now())
+
+  @@index([meterId, timestamp(sort: Desc)])
+}
