@@ -30,6 +30,12 @@ export interface SparklinePoint {
   timestampMs: number;
   voltage: number;
   energyToday: number;
+  phaseA_N_voltage?: number;
+  phaseB_N_voltage?: number;
+  phaseC_N_voltage?: number;
+  phaseA_current?: number;
+  phaseB_current?: number;
+  phaseC_current?: number;
 }
 
 export interface MeterState {

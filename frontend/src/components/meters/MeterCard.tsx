@@ -82,9 +82,10 @@ export const MeterCard: React.FC<MeterCardProps> = ({ meter }) => {
     ? new Date(lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })
     : "Waiting for signal";
 
-  // Sparkline data preparation: if empty or 1 point, create a baseline
-  const chartData = history.length > 0
-    ? history.map((pt) => ({
+  // Sparkline data preparation: filter to latest 10-second window
+  const tenSecHistory = history.filter((pt) => pt.timestampMs >= Date.now() - 10_000);
+  const chartData = tenSecHistory.length > 0
+    ? tenSecHistory.map((pt) => ({
         time: pt.time,
         value: pt.voltage,
       }))

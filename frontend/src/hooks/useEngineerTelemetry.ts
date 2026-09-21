@@ -15,7 +15,7 @@ const INITIAL_METERS: Array<{ meterId: string; location: string }> = [
   { meterId: "IKJ-AGM-004", location: "Agidingbi" },
 ];
 
-const TEN_SECONDS_MS = 10_000;
+const THIRTY_SECONDS_MS = 30_000;
 
 export function useEngineerTelemetry() {
   const [metersMap, setMetersMap] = useState<Record<string, MeterState>>(() => {
@@ -67,6 +67,12 @@ export function useEngineerTelemetry() {
                   timestampMs: now,
                   voltage: item.reading.phaseA_N_voltage,
                   energyToday: item.reading.energyToday,
+                  phaseA_N_voltage: item.reading.phaseA_N_voltage,
+                  phaseB_N_voltage: item.reading.phaseB_N_voltage,
+                  phaseC_N_voltage: item.reading.phaseC_N_voltage,
+                  phaseA_current: item.reading.phaseA_current,
+                  phaseB_current: item.reading.phaseB_current,
+                  phaseC_current: item.reading.phaseC_current,
                 });
               }
 
@@ -76,7 +82,7 @@ export function useEngineerTelemetry() {
                 lastSeen: item.lastSeen ? new Date(item.lastSeen).toISOString() : existing.lastSeen,
                 status: item.status || existing.status,
                 reading: item.reading || existing.reading,
-                history: history.filter((p) => p.timestampMs >= now - TEN_SECONDS_MS),
+                history: history.filter((p) => p.timestampMs >= now - THIRTY_SECONDS_MS),
               };
             }
             return next;
@@ -134,14 +140,20 @@ export function useEngineerTelemetry() {
                 history: [],
               };
 
-              // Rolling 10-second history buffer
+              // Rolling 30-second history buffer
               const updatedHistory: SparklinePoint[] = [
-                ...currentMeter.history.filter((pt) => pt.timestampMs >= now - TEN_SECONDS_MS),
+                ...currentMeter.history.filter((pt) => pt.timestampMs >= now - THIRTY_SECONDS_MS),
                 {
                   time: timeStr,
                   timestampMs: now,
                   voltage: payload.phaseA_N_voltage,
                   energyToday: payload.energyToday,
+                  phaseA_N_voltage: payload.phaseA_N_voltage,
+                  phaseB_N_voltage: payload.phaseB_N_voltage,
+                  phaseC_N_voltage: payload.phaseC_N_voltage,
+                  phaseA_current: payload.phaseA_current,
+                  phaseB_current: payload.phaseB_current,
+                  phaseC_current: payload.phaseC_current,
                 },
               ];
 
@@ -204,10 +216,10 @@ export function useEngineerTelemetry() {
     };
   }, []);
 
-  // 3. Keep 10-second history moving even when idle
+  // 3. Keep 30-second history moving even when idle
   useEffect(() => {
     const pruneInterval = setInterval(() => {
-      const cutoff = Date.now() - TEN_SECONDS_MS;
+      const cutoff = Date.now() - THIRTY_SECONDS_MS;
       setMetersMap((prev) => {
         let changed = false;
         const next: Record<string, MeterState> = {};
