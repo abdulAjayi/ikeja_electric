@@ -33,7 +33,7 @@ async function runVerification() {
   console.log("✅ All 5 meters configured with exact IDs, locations, and initial energy values.\n");
 
   // 2. Verify Simulator Accumulation, Drift, Anomaly & Dropout Logic
-  console.log("Test 2: Verifying Energy Accumulator (+0.06 kWh/s strictly monotonic)...");
+  console.log("Test 2: Verifying Energy Accumulator (randomized positive increment, strictly monotonic)...");
   const sim = new EnergyMeterSimulator(METERS, {
     energyIncrementPerSec: 0.06,
     anomalyProbability: 0.25, // higher probability for test detection
@@ -53,9 +53,8 @@ async function runVerification() {
       droppedTicks++;
       // Verify internal meter register incremented even while transmission is omitted
       const internalEnergy = sim.getAccumulatedEnergy(meter.id)!;
-      const expectedInternal = Number((prevEnergy + (droppedTicks * 0.06)).toFixed(3));
-      if (Math.abs(internalEnergy - expectedInternal) > 0.001) {
-        throw new Error(`Internal energy failed to accumulate during dropout! expected ${expectedInternal}, got ${internalEnergy}`);
+      if (internalEnergy <= prevEnergy) {
+        throw new Error(`Internal energy failed to accumulate during dropout! expected > ${prevEnergy}, got ${internalEnergy}`);
       }
       continue;
     }
@@ -66,10 +65,9 @@ async function runVerification() {
       throw new Error(`energyToday decreased or stalled! prev: ${prevEnergy}, current: ${p.energyToday}`);
     }
     // Increment accounts for this tick + any dropped ticks during communication silence
-    const expectedDiff = Number(((droppedTicks + 1) * 0.06).toFixed(3));
     const diff = Number((p.energyToday - prevEnergy).toFixed(3));
-    if (Math.abs(diff - expectedDiff) > 0.001) {
-      throw new Error(`energyToday increment mismatch: expected +${expectedDiff}, got +${diff}`);
+    if (diff <= 0) {
+      throw new Error(`energyToday increment failed to increase monotonically! got +${diff}`);
     }
     prevEnergy = p.energyToday;
     droppedTicks = 0;
@@ -104,8 +102,8 @@ async function runVerification() {
   console.log("✅ Dropout omission and anomaly injection verified.\n");
 
   // 3. Live WebSocket Communication Test
-  console.log("Test 3: Live WebSocket Server Transmission Test on port 3000...");
-  const TEST_PORT = 3000;
+  console.log("Test 3: Live WebSocket Server Transmission Test on port 3009...");
+  const TEST_PORT = 3009;
   const wss = new WebSocketServer({ port: TEST_PORT });
 
   const receivedPayloads: EnergyTelemetryPayload[] = [];

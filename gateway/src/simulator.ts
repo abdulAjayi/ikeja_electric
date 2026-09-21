@@ -41,10 +41,12 @@ export class EnergyMeterSimulator {
    * Generates telemetry for a given meter for the current tick.
    */
   public generateReading(meter: MeterBaselineConfig): TickResult {
-    // 1. Strict accumulation of energyToday (+0.06 kWh/sec)
+    // 1. Strict accumulation of energyToday (+0.04 to +0.08 kWh/sec random variation)
     // Physical energy registers keep incrementing internally regardless of telemetry comms status
     const currentEnergy = this.energyTodayMap.get(meter.id) ?? meter.initialEnergyToday;
-    const nextEnergy = Number((currentEnergy + this.config.energyIncrementPerSec).toFixed(3));
+    const delta = fluctuate(this.config.energyIncrementPerSec, 0.02, 3);
+    const positiveDelta = Math.max(0.02, delta);
+    const nextEnergy = Number((currentEnergy + positiveDelta).toFixed(3));
     this.energyTodayMap.set(meter.id, nextEnergy);
 
     // 2. Check for sensor dropout simulation (simulating comms silence/packet drop)
