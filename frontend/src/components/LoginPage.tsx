@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Loader2, Zap, AlertCircle } from "lucide-react";
 import gridImg from "../assets/grid-infrastructure.jpg";
 // import gridImg from "../assets/ikeja electric image.jpg";
+// import gridImg from "../assets/nbc 1.webp";
 import { authService } from "../services/authService";
 import type { User } from "../types/auth";
 
@@ -33,7 +34,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       const { user } = await authService.login(email, password, rememberMe);
       onLoginSuccess(user);
     } catch (err: any) {
-      setErrorMessage(err.message || "Invalid email or password. Please try again.");
+      setErrorMessage(
+        err.message || "Invalid email or password. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +64,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <Zap className="w-5 h-5 text-white fill-white" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white drop-shadow-sm">
-            Ikeja Energy
+            Nbc Ikeja
           </span>
         </div>
 
@@ -97,9 +100,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <h2 className="text-2xl sm:text-3xl font-bold text-nearblack tracking-tight">
               Welcome Back
             </h2>
-            <p className="mt-2 text-sm text-grey">
-              Sign in to your dashboard
-            </p>
+            <p className="mt-2 text-sm text-grey">Sign in to your dashboard</p>
           </header>
 
           {/* Inline Error Callout */}
@@ -111,7 +112,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             >
               <AlertCircle className="w-5 h-5 text-[#B91C1C] flex-shrink-0 mt-0.5" />
               <div className="leading-snug">
-                <span className="font-semibold block mb-0.5">Authentication Failed</span>
+                <span className="font-semibold block mb-0.5">
+                  Authentication Failed
+                </span>
                 {errorMessage}
               </div>
             </div>

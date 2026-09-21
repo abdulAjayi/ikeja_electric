@@ -43,7 +43,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content Area (Offset by sidebar width on desktop) */}
       <div className="lg:pl-64 xl:pl-72 flex-1 flex flex-col min-w-0">
         {/* Sticky Top Bar */}
-        <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-sm">
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-6 sm:px-8 lg:px-10 py-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             {/* Mobile Hamburger Toggle Button */}
             <button
@@ -76,7 +76,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Dynamic Page Content Outlet */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 px-6 sm:px-8 lg:px-10 py-8 w-full">
           <Outlet />
         </main>
       </div>

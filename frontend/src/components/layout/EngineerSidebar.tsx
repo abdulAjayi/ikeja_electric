@@ -55,11 +55,11 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
   // Helper for initials
   const initials = currentUser.name
     ? currentUser.name
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
     : "EN";
 
   const sidebarContent = (
@@ -74,7 +74,7 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-base font-bold tracking-tight text-white leading-tight">
-                Ikeja Energy
+                Nbc Ikeja
               </span>
               <span className="text-[11px] font-medium text-[#9CA3AF] tracking-wide">
                 Grid Telemetry
@@ -103,10 +103,9 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
                 to={item.to}
                 onClick={handleNavClick}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
-                    isActive
-                      ? "bg-[#B91C1C] text-white shadow-sm"
-                      : "text-[#9CA3AF] hover:text-white hover:bg-white/5"
+                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${isActive
+                    ? "bg-[#B91C1C] text-white shadow-sm"
+                    : "text-[#9CA3AF] hover:text-white hover:bg-white/5"
                   }`
                 }
               >
@@ -127,10 +126,9 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
               to="/engineer/settings"
               onClick={handleNavClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
-                  isActive
-                    ? "bg-[#B91C1C] text-white shadow-sm"
-                    : "text-[#9CA3AF] hover:text-white hover:bg-white/5"
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${isActive
+                  ? "bg-[#B91C1C] text-white shadow-sm"
+                  : "text-[#9CA3AF] hover:text-white hover:bg-white/5"
                 }`
               }
             >
@@ -196,9 +194,8 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
 
       {/* Mobile Slide-Over Drawer */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-300 ease-in-out lg:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-300 ease-in-out lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {sidebarContent}
       </div>
