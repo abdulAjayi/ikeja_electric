@@ -82,6 +82,84 @@ export class AuthService {
   }
 
   /**
+   * Update email address for a user
+   */
+  public static async updateEmail(userId: string, newEmail: string) {
+    const trimmed = newEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      throw new Error("Please enter a valid email address");
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: {
+        email: trimmed,
+        NOT: { id: userId },
+      },
+    });
+
+    if (existing) {
+      throw new Error(`Email "${trimmed}" is already in use by another account`);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { email: trimmed },
+    });
+
+    const token = this.generateToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      role: updatedUser.role,
+    });
+
+    return {
+      token,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+      },
+    };
+  }
+
+  /**
+   * Update password for a user
+   */
+  public static async updatePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
+    if (!currentPassword) {
+      throw new Error("Current password is required");
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters long");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: passwordHash },
+    });
+
+    return { message: "Password updated successfully" };
+  }
+
+  /**
    * Helper to sign JWT tokens
    */
   public static generateToken(payload: AuthTokenPayload): string {

@@ -68,4 +68,67 @@ export const authService = {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(USER_KEY);
   },
+
+  /**
+   * Update email address for logged-in user
+   */
+  async updateEmail(newEmail: string): Promise<User> {
+    const auth = this.getCurrentAuth();
+    if (!auth.token) {
+      throw new Error("Authentication token missing. Please sign in again.");
+    }
+
+    const response = await fetch("/api/auth/update-email", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({ email: newEmail.trim() }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Failed to update email. Please try again.");
+    }
+
+    const { token: newToken, user: updatedUser } = data as { token: string; user: User };
+
+    // Update persisted session
+    const isLocal = !!localStorage.getItem(TOKEN_KEY);
+    const storage = isLocal ? localStorage : sessionStorage;
+
+    storage.setItem(TOKEN_KEY, newToken);
+    storage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+    return updatedUser;
+  },
+
+  /**
+   * Update password for logged-in user
+   */
+  async updatePassword(currentPassword: string, newPassword: string): Promise<string> {
+    const auth = this.getCurrentAuth();
+    if (!auth.token) {
+      throw new Error("Authentication token missing. Please sign in again.");
+    }
+
+    const response = await fetch("/api/auth/update-password", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Failed to update password. Please try again.");
+    }
+
+    return data?.message || "Password updated successfully";
+  },
 };

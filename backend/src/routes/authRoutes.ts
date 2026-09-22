@@ -55,3 +55,57 @@ authRouter.get(
     res.json({ user: req.user });
   }
 );
+
+// Update user email
+authRouter.patch(
+  "/update-email",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user?.userId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).json({ error: "New email address is required" });
+        return;
+      }
+
+      const result = await AuthService.updateEmail(req.user.userId, email);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+// Update user password
+authRouter.patch(
+  "/update-password",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user?.userId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({
+          error: "Current password and new password are required",
+        });
+        return;
+      }
+
+      const result = await AuthService.updatePassword(
+        req.user.userId,
+        currentPassword,
+        newPassword
+      );
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
