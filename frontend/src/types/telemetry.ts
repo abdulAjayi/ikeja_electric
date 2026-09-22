@@ -36,6 +36,9 @@ export interface SparklinePoint {
   phaseA_current?: number;
   phaseB_current?: number;
   phaseC_current?: number;
+  frequency?: number;
+  powerFactor?: number;
+  status?: MeterStatus;
 }
 
 export interface MeterState {

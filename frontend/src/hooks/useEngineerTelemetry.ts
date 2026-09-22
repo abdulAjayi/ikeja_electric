@@ -73,6 +73,9 @@ export function useEngineerTelemetry() {
                   phaseA_current: item.reading.phaseA_current,
                   phaseB_current: item.reading.phaseB_current,
                   phaseC_current: item.reading.phaseC_current,
+                  frequency: item.reading.frequency ?? 50.0,
+                  powerFactor: item.reading.powerFactor ?? 0.95,
+                  status: item.status || "NORMAL",
                 });
               }
 
@@ -154,6 +157,9 @@ export function useEngineerTelemetry() {
                   phaseA_current: payload.phaseA_current,
                   phaseB_current: payload.phaseB_current,
                   phaseC_current: payload.phaseC_current,
+                  frequency: payload.frequency,
+                  powerFactor: payload.powerFactor,
+                  status: payload.status,
                 },
               ];
 

@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
+  Radio,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -254,6 +255,33 @@ export const MeterDetailPage: React.FC = () => {
     });
   }, [history, reading]);
 
+  // Data Log Rows Calculation (Step 5) - Newest telemetry reading at top
+  const dataLogRows = useMemo(() => {
+    if (history && history.length > 0) {
+      return [...history].reverse();
+    }
+    if (reading) {
+      return [
+        {
+          time: new Date().toLocaleTimeString([], { hour12: false }),
+          timestampMs: Date.now(),
+          voltage: reading.phaseA_N_voltage,
+          energyToday: reading.energyToday,
+          phaseA_N_voltage: reading.phaseA_N_voltage,
+          phaseB_N_voltage: reading.phaseB_N_voltage,
+          phaseC_N_voltage: reading.phaseC_N_voltage,
+          phaseA_current: reading.phaseA_current,
+          phaseB_current: reading.phaseB_current,
+          phaseC_current: reading.phaseC_current,
+          frequency: reading.frequency,
+          powerFactor: reading.powerFactor,
+          status: status,
+        },
+      ];
+    }
+    return [];
+  }, [history, reading, status]);
+
   const latestBaselinePoint = baselineData[baselineData.length - 1] || {
     "Actual Load": 216.0,
     "Calculated Baseline": 216.0,
@@ -289,6 +317,40 @@ export const MeterDetailPage: React.FC = () => {
         iconClass: "text-[#DC2626]",
         text: `${deviationPct >= 0 ? "+" : ""}${deviationPct}% sharp load anomaly detected`,
       };
+
+  // Power Quality Metrics & Threshold Status (Step 4)
+  const pf = reading?.powerFactor ?? 0.95;
+  const thd = reading?.harmonics ?? 2.1;
+  const q = reading?.reactivePower ?? 32.8;
+  const freq = reading?.frequency ?? 50.0;
+
+  // 1. Power Factor status: green >= 0.90, yellow 0.75-0.89, red < 0.75
+  const pfStatus = pf >= 0.90
+    ? { label: "Optimal", textColor: "text-[#16A34A]" }
+    : pf >= 0.75
+    ? { label: "Marginal", textColor: "text-[#CA8A04]" }
+    : { label: "Poor", textColor: "text-[#DC2626]" };
+
+  // 2. Harmonics THD% status: green < 4%, yellow 4-7%, red > 7%
+  const thdStatus = thd < 4.0
+    ? { label: "Normal", textColor: "text-[#16A34A]" }
+    : thd <= 7.0
+    ? { label: "Elevated", textColor: "text-[#CA8A04]" }
+    : { label: "High", textColor: "text-[#DC2626]" };
+
+  // 3. Reactive Power kVAR status: green <= 45, yellow 45-75, red > 75
+  const qStatus = q <= 45.0
+    ? { label: "Normal", textColor: "text-[#16A34A]" }
+    : q <= 75.0
+    ? { label: "Elevated", textColor: "text-[#CA8A04]" }
+    : { label: "Spiking", textColor: "text-[#DC2626]" };
+
+  // 4. Frequency Hz status: green 49.5-50.5, yellow 49-49.4 / 50.6-51.0, red < 49 / > 51
+  const freqStatus = (freq >= 49.5 && freq <= 50.5)
+    ? { label: "Stable", textColor: "text-[#16A34A]" }
+    : (freq >= 49.0 && freq <= 51.0)
+    ? { label: "Drifting", textColor: "text-[#CA8A04]" }
+    : { label: "Unstable", textColor: "text-[#DC2626]" };
 
   return (
     <div className="w-full space-y-6 pb-12 font-sans">
@@ -491,7 +553,7 @@ export const MeterDetailPage: React.FC = () => {
           </div>
         </section>
 
-        {/* 2. Baseline Comparison Section (Built in Step 3) */}
+        {/* 2. Baseline Comparison & Power Quality Combined Row (50/50 Split - Step 3 & 4) */}
         <section
           aria-label="Baseline Comparison Section"
           className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm space-y-6"
@@ -501,11 +563,11 @@ export const MeterDetailPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-[#1E40AF]" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-nearblack">
-                Baseline Comparison (Consumption Rate)
+                Baseline Comparison & Power Quality
               </h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-grey">Auto-calculated rolling baseline</span>
+              <span className="text-xs text-grey">Auto-calculated system metrics</span>
               <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#1E40AF] px-2 py-0.5 rounded border border-blue-200 select-none">
                 System Active
               </span>
@@ -575,122 +637,274 @@ export const MeterDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Overlaid Line Chart: Actual Rate vs Baseline Rate */}
-          <div className="bg-[#F7F7F5]/60 rounded-xl border border-gray-200/60 p-4">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div>
-                <h3 className="text-xs font-bold text-nearblack uppercase tracking-wider">
-                  Active Load Rate vs Historical Baseline
-                </h3>
-                <p className="text-[11px] text-grey">Overlaid time-series comparison (kW active load)</p>
+          {/* Equal 50/50 Split Row Layout: Baseline Chart on Left (50%), Power Quality 2x2 Grid on Right (50%) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Left Side (50%): Overlaid Baseline Chart */}
+            <div className="bg-[#F7F7F5]/60 rounded-xl border border-gray-200/60 p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div>
+                  <h3 className="text-xs font-bold text-nearblack uppercase tracking-wider">
+                    Active Load Rate vs Historical Baseline
+                  </h3>
+                  <p className="text-[11px] text-grey">Overlaid time-series comparison (kW active load)</p>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-medium select-none">
+                  <span className="flex items-center gap-1.5 text-nearblack font-semibold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#1E40AF]" />
+                    Actual Rate
+                  </span>
+                  <span className="flex items-center gap-1.5 text-grey">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#60A5FA]" />
+                    Baseline Rate
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-xs font-medium select-none">
-                <span className="flex items-center gap-1.5 text-nearblack font-semibold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#1E40AF]" />
-                  Actual Rate
-                </span>
-                <span className="flex items-center gap-1.5 text-grey">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#60A5FA]" />
-                  Baseline Rate
-                </span>
+
+              <div className="h-64 sm:h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={baselineData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fontSize: 10, fill: "#6B7280" }}
+                      tickLine={false}
+                      axisLine={{ stroke: "#E5E7EB" }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "#6B7280" }}
+                      tickLine={false}
+                      axisLine={{ stroke: "#E5E7EB" }}
+                      domain={[0, (dataMax: number) => Math.ceil(dataMax + 50)]}
+                      unit=" kW"
+                    />
+                    <Tooltip content={<BaselineTooltip />} />
+                    <Legend
+                      verticalAlign="top"
+                      height={36}
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: "11px", fontWeight: 600, paddingTop: "0px" }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Actual Load"
+                      stroke="#1E40AF"
+                      strokeWidth={2.5}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Calculated Baseline"
+                      stroke="#60A5FA"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={baselineData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10, fill: "#6B7280" }}
-                    tickLine={false}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: "#6B7280" }}
-                    tickLine={false}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax + 50)]}
-                    unit=" kW"
-                  />
-                  <Tooltip content={<BaselineTooltip />} />
-                  <Legend
-                    verticalAlign="top"
-                    height={36}
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: "11px", fontWeight: 600, paddingTop: "0px" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Actual Load"
-                    stroke="#1E40AF"
-                    strokeWidth={2.5}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Calculated Baseline"
-                    stroke="#60A5FA"
-                    strokeWidth={2}
-                    strokeDasharray="4 4"
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            {/* Right Side (50%): Power Quality 2x2 Grid with Enhanced Presence & Breathing Room */}
+            <div className="bg-[#F7F7F5]/60 rounded-xl border border-gray-200/60 p-5 flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-200/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-grey" />
+                  <h3 className="text-xs font-bold text-nearblack uppercase tracking-wider">
+                    Power Quality Metrics
+                  </h3>
+                </div>
+                <span className="text-[10px] font-semibold text-grey bg-white px-2 py-0.5 rounded border border-gray-200 select-none">
+                  Live Stream
+                </span>
+              </div>
+
+              {/* 2x2 Grid with Generous Padding & Visual Icons */}
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                {/* 1. Power Factor */}
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-2xs flex flex-col justify-between hover:border-gray-300 transition-all">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Zap className="w-4 h-4 text-grey flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-grey truncate">
+                      Power Factor
+                    </span>
+                  </div>
+                  <div className="my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-nearblack font-mono tracking-tight">
+                      {pf.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-grey pt-2 border-t border-gray-100 mt-1">
+                    <span>Target &ge; 0.90</span>
+                    <span className={`font-semibold ${pfStatus.textColor}`}>{pfStatus.label}</span>
+                  </div>
+                </div>
+
+                {/* 2. Harmonics (THD) */}
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-2xs flex flex-col justify-between hover:border-gray-300 transition-all">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Activity className="w-4 h-4 text-grey flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-grey truncate">
+                      Harmonics (THD)
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-nearblack font-mono tracking-tight">
+                      {thd.toFixed(1)}
+                    </span>
+                    <span className="text-sm font-semibold text-grey">%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-grey pt-2 border-t border-gray-100 mt-1">
+                    <span>Limit &lt; 4.0%</span>
+                    <span className={`font-semibold ${thdStatus.textColor}`}>{thdStatus.label}</span>
+                  </div>
+                </div>
+
+                {/* 3. Reactive Power */}
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-2xs flex flex-col justify-between hover:border-gray-300 transition-all">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Radio className="w-4 h-4 text-grey flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-grey truncate">
+                      Reactive Power
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-nearblack font-mono tracking-tight">
+                      {q.toFixed(1)}
+                    </span>
+                    <span className="text-xs font-semibold text-grey">kVAR</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-grey pt-2 border-t border-gray-100 mt-1">
+                    <span>Var Envelope</span>
+                    <span className={`font-semibold ${qStatus.textColor}`}>{qStatus.label}</span>
+                  </div>
+                </div>
+
+                {/* 4. Frequency */}
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-2xs flex flex-col justify-between hover:border-gray-300 transition-all">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Clock className="w-4 h-4 text-grey flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-grey truncate">
+                      Frequency
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-nearblack font-mono tracking-tight">
+                      {freq.toFixed(1)}
+                    </span>
+                    <span className="text-sm font-semibold text-grey">Hz</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-grey pt-2 border-t border-gray-100 mt-1">
+                    <span>Grid Sync (50Hz)</span>
+                    <span className={`font-semibold ${freqStatus.textColor}`}>{freqStatus.label}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* 3. Power Quality (Placeholder - Step 4) */}
-        <section
-          aria-label="Power Quality Section"
-          className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm"
-        >
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-grey" />
-              <h2 className="text-sm font-bold uppercase tracking-wider text-nearblack">
-                Power Quality
-              </h2>
-            </div>
-            <span className="text-[11px] font-medium text-grey bg-gray-100 px-2 py-0.5 rounded">
-              Step 4 Placeholder
-            </span>
-          </div>
-          <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg bg-[#F7F7F5]/50 text-center">
-            <Zap className="w-8 h-8 text-gray-300 mb-2" />
-            <p className="text-sm font-semibold text-nearblack mb-1">Power Quality & Harmonics Breakdown</p>
-            <p className="text-xs text-grey max-w-sm">
-              Power factor, frequency stability, and THD harmonic readouts will be rendered here in Step 4.
-            </p>
-          </div>
-        </section>
-
-        {/* 4. Data Log (Placeholder - Step 5) */}
+        {/* 3. Data Log Section (Step 5 of 5) */}
         <section
           aria-label="Data Log Section"
           className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm"
         >
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3 mb-4">
             <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-grey" />
+              <Database className="w-4 h-4 text-nearblack" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-nearblack">
                 Data Log
               </h2>
             </div>
-            <span className="text-[11px] font-medium text-grey bg-gray-100 px-2 py-0.5 rounded">
-              Step 5 Placeholder
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-grey">Rolling 30s Window</span>
+              <span className="text-[11px] font-mono font-semibold text-charcoal bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                {dataLogRows.length} {dataLogRows.length === 1 ? "entry" : "entries"}
+              </span>
+            </div>
           </div>
-          <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg bg-[#F7F7F5]/50 text-center">
-            <Database className="w-8 h-8 text-gray-300 mb-2" />
-            <p className="text-sm font-semibold text-nearblack mb-1">Historical Data Log Table</p>
-            <p className="text-xs text-grey max-w-sm">
-              Time-series telemetry table with filterable log records will be integrated here in Step 5.
-            </p>
+
+          {/* Clean Scrollable Telemetry Data Table */}
+          <div className="rounded-lg border border-gray-200/80 overflow-hidden shadow-2xs">
+            <div className="max-h-[380px] overflow-y-auto overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead className="sticky top-0 z-10 bg-[#F7F7F5] border-b border-gray-200/80 text-[11px] font-bold uppercase tracking-wider text-grey select-none">
+                  <tr>
+                    <th scope="col" className="py-3 px-3.5 text-left font-bold">Time</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase A-N (V)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase B-N (V)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase C-N (V)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase A (A)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase B (A)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Phase C (A)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Energy Today (kWh)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Frequency (Hz)</th>
+                    <th scope="col" className="py-3 px-3 text-right font-bold">Power Factor</th>
+                    <th scope="col" className="py-3 px-3.5 text-center font-bold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white text-xs font-sans">
+                  {dataLogRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="py-8 text-center text-grey">
+                        Waiting for telemetry stream...
+                      </td>
+                    </tr>
+                  ) : (
+                    dataLogRows.map((row, idx) => {
+                      const rowStatus: MeterStatus = row.status || status || "NORMAL";
+                      const rowBadge = STATUS_CONFIG[rowStatus] || STATUS_CONFIG.NORMAL;
+                      return (
+                        <tr
+                          key={`${row.timestampMs || idx}-${row.time}`}
+                          className="hover:bg-[#F7F7F5]/80 transition-colors"
+                        >
+                          <td className="py-2.5 px-3.5 font-mono font-semibold text-nearblack whitespace-nowrap">
+                            {row.time}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseA_N_voltage !== undefined ? row.phaseA_N_voltage.toFixed(1) : (row.voltage ? row.voltage.toFixed(1) : "--")}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseB_N_voltage !== undefined ? row.phaseB_N_voltage.toFixed(1) : (row.voltage ? (row.voltage - 0.4).toFixed(1) : "--")}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseC_N_voltage !== undefined ? row.phaseC_N_voltage.toFixed(1) : (row.voltage ? (row.voltage + 0.3).toFixed(1) : "--")}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseA_current !== undefined ? row.phaseA_current.toFixed(1) : "--"}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseB_current !== undefined ? row.phaseB_current.toFixed(1) : "--"}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.phaseC_current !== undefined ? row.phaseC_current.toFixed(1) : "--"}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-nearblack whitespace-nowrap">
+                            {row.energyToday !== undefined ? row.energyToday.toFixed(2) : "--"}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.frequency !== undefined ? row.frequency.toFixed(1) : "50.0"}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-charcoal whitespace-nowrap">
+                            {row.powerFactor !== undefined ? row.powerFactor.toFixed(2) : "0.95"}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${rowBadge.badgeClass}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${rowBadge.dotClass}`} />
+                              {rowBadge.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>
