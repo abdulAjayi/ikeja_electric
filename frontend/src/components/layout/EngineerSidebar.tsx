@@ -1,16 +1,15 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Zap,
   LayoutDashboard,
   Gauge,
   Activity,
-  AlertTriangle,
-  Radio,
   Settings,
   LogOut,
   X,
 } from "lucide-react";
+import { ConfirmSignoutModal } from "../common/ConfirmSignoutModal";
 import type { User } from "../../types/auth";
 
 interface EngineerSidebarProps {
@@ -30,8 +29,6 @@ const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Overview", to: "/engineer/overview", icon: LayoutDashboard },
   { label: "Meters / Circuits", to: "/engineer/meters", icon: Gauge },
   { label: "Power Quality", to: "/engineer/power-quality", icon: Activity },
-  { label: "Thresholds & Alerts", to: "/engineer/alerts", icon: AlertTriangle },
-  { label: "Device / Gateway Health", to: "/engineer/gateway-health", icon: Radio },
 ];
 
 export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
@@ -41,12 +38,19 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
   setMobileOpen,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showSignoutModal, setShowSignoutModal] = useState(false);
 
   const handleNavClick = () => {
     setMobileOpen(false);
   };
 
   const handleLogoutClick = () => {
+    setShowSignoutModal(true);
+  };
+
+  const handleConfirmSignout = () => {
+    setShowSignoutModal(false);
     setMobileOpen(false);
     onLogout();
     navigate("/login");
@@ -97,12 +101,16 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
         <nav aria-label="Main Navigation" className="space-y-1">
           {MAIN_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
+            const isActive = item.to === "/engineer/meters"
+              ? location.pathname.startsWith("/engineer/meters")
+              : location.pathname === item.to;
+
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={handleNavClick}
-                className={({ isActive }) =>
+                className={
                   `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${isActive
                     ? "bg-[#B91C1C] text-white shadow-sm"
                     : "text-[#9CA3AF] hover:text-white hover:bg-white/5"
@@ -199,6 +207,13 @@ export const EngineerSidebar: React.FC<EngineerSidebarProps> = ({
       >
         {sidebarContent}
       </div>
+
+      {/* Confirmation Sign Out Modal Popup */}
+      <ConfirmSignoutModal
+        isOpen={showSignoutModal}
+        onClose={() => setShowSignoutModal(false)}
+        onConfirm={handleConfirmSignout}
+      />
     </>
   );
 };
