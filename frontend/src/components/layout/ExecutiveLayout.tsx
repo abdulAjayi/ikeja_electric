@@ -40,7 +40,7 @@ export const ExecutiveLayout: React.FC<ExecutiveLayoutProps> = ({
               <Zap className="w-3.5 h-3.5 text-white fill-white" />
             </div>
             <span className="font-bold text-sm text-white tracking-tight">
-              Nbc Ikeja Executive
+              NBC Ikeja Energy Monitoring Executive
             </span>
           </div>
         </div>
