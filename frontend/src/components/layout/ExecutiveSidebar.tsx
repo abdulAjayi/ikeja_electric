@@ -78,7 +78,7 @@ export const ExecutiveSidebar: React.FC<ExecutiveSidebarProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-base font-bold tracking-tight text-white leading-tight">
-                Nbc Ikeja
+                NBC Ikeja Energy Monitoring
               </span>
               <span className="text-[11px] font-medium text-[#9CA3AF] tracking-wide">
                 Executive Portal
