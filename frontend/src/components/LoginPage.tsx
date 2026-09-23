@@ -64,7 +64,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <Zap className="w-5 h-5 text-white fill-white" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white drop-shadow-sm">
-            Nbc Ikeja
+            NBC Ikeja Energy Monitoring
           </span>
         </div>
 
@@ -91,7 +91,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               <Zap className="w-4 h-4 text-white fill-white" />
             </div>
             <span className="text-lg font-bold tracking-tight text-nearblack">
-              Ikeja Energy
+              NBC Ikeja Energy Monitoring
             </span>
           </div>
 
