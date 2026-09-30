@@ -1,4 +1,5 @@
 import type { AuthState, LoginResponse, User } from "../types/auth";
+import { API_BASE_URL } from "../config";
 
 const TOKEN_KEY = "ikeja_auth_token";
 const USER_KEY = "ikeja_auth_user";
@@ -8,7 +9,7 @@ export const authService = {
    * Log in user against POST /api/auth/login
    */
   async login(email: string, password: string, rememberMe: boolean = false): Promise<LoginResponse> {
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -78,7 +79,7 @@ export const authService = {
       throw new Error("Authentication token missing. Please sign in again.");
     }
 
-    const response = await fetch("/api/auth/update-email", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/update-email`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -114,7 +115,7 @@ export const authService = {
       throw new Error("Authentication token missing. Please sign in again.");
     }
 
-    const response = await fetch("/api/auth/update-password", {
+    const response = await fetch(`${API_BASE_URL}/api/auth/update-password`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

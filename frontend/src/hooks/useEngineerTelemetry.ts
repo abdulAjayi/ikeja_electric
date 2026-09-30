@@ -6,6 +6,7 @@ import type {
   SparklinePoint,
   OverviewStats,
 } from "../types/telemetry";
+import { API_BASE_URL, getWebSocketUrl } from "../config";
 
 const INITIAL_METERS: Array<{ meterId: string; location: string }> = [
   { meterId: "IKJ-IM-001", location: "Ikeja" },
@@ -43,7 +44,7 @@ export function useEngineerTelemetry() {
     let isMounted = true;
     async function fetchInitialMeters() {
       try {
-        const res = await fetch("/api/meters");
+        const res = await fetch(`${API_BASE_URL}/api/meters`);
         if (!res.ok) return;
         const data = await res.json();
         if (data && Array.isArray(data.meters) && isMounted) {
@@ -109,9 +110,7 @@ export function useEngineerTelemetry() {
     function connectWebSocket() {
       if (isStopped) return;
 
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      // Connect via Vite proxy /ws (or direct to backend 3000 if accessed directly)
-      const wsUrl = `${protocol}//${window.location.host}/ws?type=dashboard`;
+      const wsUrl = getWebSocketUrl("/ws?type=dashboard");
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;

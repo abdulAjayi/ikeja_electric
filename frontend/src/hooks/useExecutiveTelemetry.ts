@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { MeterState } from "../types/telemetry";
+import { API_BASE_URL, getWebSocketUrl } from "../config";
 
 export interface ExecutiveSummaryState {
   totalEnergyKWh: number;
@@ -50,8 +51,8 @@ export function useExecutiveTelemetry() {
     async function fetchInitialData() {
       try {
         const [execRes, metersRes] = await Promise.all([
-          fetch("/api/executive/summary"),
-          fetch("/api/meters"),
+          fetch(`${API_BASE_URL}/api/executive/summary`),
+          fetch(`${API_BASE_URL}/api/meters`),
         ]);
 
         if (execRes.ok) {
@@ -99,8 +100,7 @@ export function useExecutiveTelemetry() {
     function connectWebSocket() {
       if (isStopped) return;
 
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws?type=dashboard`;
+      const wsUrl = getWebSocketUrl("/ws?type=dashboard");
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
