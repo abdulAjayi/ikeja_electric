@@ -9,6 +9,12 @@ const WS_URL = process.env.GATEWAY_WS_URL || "ws://localhost:3000?type=gateway";
 const RECONNECT_DELAY_MS = 3000;
 const TICK_INTERVAL_MS = 5000;
 
+import http from "http";
+
+http
+  .createServer((_, res) => res.end("ok"))
+  .listen(Number(process.env.PORT) || 3000, "0.0.0.0");
+
 class MockGateway {
   private ws: WebSocket | null = null;
   private tickIntervalId: NodeJS.Timeout | null = null;
@@ -108,8 +114,8 @@ class MockGateway {
             result.payload.status === "NORMAL"
               ? "🟢 NORMAL"
               : result.payload.status === "WARNING"
-              ? "🟡 WARNING"
-              : "🔴 CRITICAL";
+                ? "🟡 WARNING"
+                : "🔴 CRITICAL";
 
           console.log(
             `[${result.payload.timestamp}] 📡 Meter ${meter.id.padEnd(11)} | ` +
