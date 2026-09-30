@@ -94,7 +94,7 @@ export const METERS: MeterBaselineConfig[] = [
 ];
 
 export const DEFAULT_SIMULATION_CONFIG: SimulationConfig = {
-  energyIncrementPerSec: 0.06, // Strict +0.06 kWh accumulation per second
+  energyIncrementPerSec: 0.30, // +0.30 kWh accumulation per 5s tick
   anomalyProbability: 0.035,   // 3.5% chance per tick (within 2-5% target)
   dropoutProbability: 0.02,    // 2% chance per tick (simulates packet drop/sensor silence)
 };

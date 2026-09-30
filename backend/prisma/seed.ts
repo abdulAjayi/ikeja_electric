@@ -10,7 +10,6 @@ const INITIAL_METERS = [
   { id: "IKJ-AM-003", location: "Alawa" },
   { id: "IKJ-AGM-004", location: "Agidingbi" },
 ];
-
 async function main() {
   console.log("🌱 Seeding database...");
 

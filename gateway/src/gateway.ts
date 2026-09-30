@@ -7,7 +7,7 @@ dotenv.config();
 
 const WS_URL = process.env.GATEWAY_WS_URL || "ws://localhost:3000?type=gateway";
 const RECONNECT_DELAY_MS = 3000;
-const TICK_INTERVAL_MS = 1000;
+const TICK_INTERVAL_MS = 5000;
 
 class MockGateway {
   private ws: WebSocket | null = null;

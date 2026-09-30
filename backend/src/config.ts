@@ -10,6 +10,6 @@ export const CONFIG = {
   EMISSIONS_FACTOR_KG: parseFloat(process.env.EMISSIONS_FACTOR_KG || "0.43"),
   NODE_ENV: process.env.NODE_ENV || "development",
   MAX_PERSISTED_READINGS_PER_METER: 30,
-  STALE_THRESHOLD_MS: 2500, // Threshold to flag a meter as STALE (~2.5 missed ticks)
-  STALE_CHECK_INTERVAL_MS: 1000,
+  STALE_THRESHOLD_MS: 12500, // Threshold to flag a meter as STALE (~2.5 missed 5s ticks)
+  STALE_CHECK_INTERVAL_MS: 2500,
 };
